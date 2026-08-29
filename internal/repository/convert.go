@@ -167,3 +167,28 @@ func ptrToNullPaymentMethod(p *sqlc.PaymentMethod) sqlc.NullPaymentMethod {
     }
     return sqlc.NullPaymentMethod{PaymentMethod: *p, Valid: true}
 }
+
+// Converts a pgtype.Numeric into a plain int64 (no ×100 scaling) —
+// use for numeric columns representing a plain integer value, like
+// a percentage, rather than money.
+func pgNumericToInt(n pgtype.Numeric) int64 {
+    if !n.Valid || n.Int == nil {
+        return 0
+    }
+    rat := new(big.Rat).SetInt(n.Int)
+    if n.Exp >= 0 {
+        pow := new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(n.Exp)), nil)
+        rat.Mul(rat, new(big.Rat).SetInt(pow))
+    } else {
+        pow := new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(-n.Exp)), nil)
+        rat.Quo(rat, new(big.Rat).SetInt(pow))
+    }
+    f, _ := rat.Float64()
+    return int64(math.Round(f))
+}
+
+// Converts a plain int64 into pgtype.Numeric (no ×100 scaling) —
+// the inverse of pgNumericToInt.
+func intToPgNumeric(i int64) pgtype.Numeric {
+    return pgtype.Numeric{Int: big.NewInt(i), Exp: 0, Valid: true}
+}

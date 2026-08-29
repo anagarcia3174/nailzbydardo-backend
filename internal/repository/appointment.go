@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type AppointmentRepository struct {
@@ -371,11 +372,17 @@ func (r *AppointmentRepository) CreateAppointmentDiscount(ctx context.Context, a
 	if err != nil {
 		return model.AppointmentDiscount{}, fmt.Errorf("error converting id to uuid: %w", err)
 	}
+	var pgValue pgtype.Numeric
+	if discountType == sqlc.DiscountTypePercent {
+		pgValue = intToPgNumeric(discountValue)
+	} else {
+		pgValue = centsToPgNumeric(discountValue)
+	}
 	params := sqlc.CreateAppointmentDiscountParams{
 		AppointmentID: pgID,
 		DiscountName:  discountName,
 		DiscountType:  discountType,
-		DiscountValue: centsToPgNumeric(discountValue),
+		DiscountValue: pgValue,
 	}
 	a, err := r.q.CreateAppointmentDiscount(ctx, params)
 	if err != nil {
@@ -389,12 +396,17 @@ func (r *AppointmentRepository) CreateAppointmentDiscount(ctx context.Context, a
 	if err != nil {
 		return model.AppointmentDiscount{}, fmt.Errorf("error converting uuid to id: %w", err)
 	}
+if a.DiscountType == sqlc.DiscountTypePercent {
+    discountValue = pgNumericToInt(a.DiscountValue)
+} else {
+    discountValue = pgNumericToCents(a.DiscountValue)
+}
 	discount := model.AppointmentDiscount{
 		ID:            discountID,
 		AppointmentID: apptID,
 		DiscountName:  a.DiscountName,
 		DiscountType:  a.DiscountType,
-		DiscountValue: pgNumericToCents(a.DiscountValue),
+		DiscountValue: discountValue,
 		CreatedAt:     pgTimestamptzToTime(a.CreatedAt),
 	}
 	return discount, nil
@@ -415,12 +427,17 @@ func (r *AppointmentRepository) ListAppointmentDiscountsByAppointment(ctx contex
 		if err != nil {
 			return []model.AppointmentDiscountSummary{}, fmt.Errorf("error converting uuid to id: %w", err)
 		}
-
+		var value int64
+if a.DiscountType == sqlc.DiscountTypePercent {
+    value = pgNumericToInt(a.DiscountValue)
+} else {
+    value = pgNumericToCents(a.DiscountValue)
+}
 		discount := model.AppointmentDiscountSummary{
 			ID:            discountID,
 			DiscountName:  a.DiscountName,
 			DiscountType:  a.DiscountType,
-			DiscountValue: pgNumericToCents(a.DiscountValue),
+			DiscountValue: value,
 		}
 		appointmentDiscounts = append(appointmentDiscounts, discount)
 	}
