@@ -51,7 +51,7 @@ func (q *Queries) DeleteExpense(ctx context.Context, id pgtype.UUID) error {
 }
 
 const getExpensesForPeriod = `-- name: GetExpensesForPeriod :one
-SELECT COALESCE(SUM(price), 0) AS total FROM expenses
+SELECT COALESCE(SUM(price), 0)::numeric AS total FROM expenses
 WHERE date_purchased >= $1 AND date_purchased < $2
 `
 
@@ -60,9 +60,9 @@ type GetExpensesForPeriodParams struct {
 	DatePurchased_2 pgtype.Date `json:"date_purchased_2"`
 }
 
-func (q *Queries) GetExpensesForPeriod(ctx context.Context, arg GetExpensesForPeriodParams) (interface{}, error) {
+func (q *Queries) GetExpensesForPeriod(ctx context.Context, arg GetExpensesForPeriodParams) (pgtype.Numeric, error) {
 	row := q.db.QueryRow(ctx, getExpensesForPeriod, arg.DatePurchased, arg.DatePurchased_2)
-	var total interface{}
+	var total pgtype.Numeric
 	err := row.Scan(&total)
 	return total, err
 }

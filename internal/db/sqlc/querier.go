@@ -28,7 +28,7 @@ type Querier interface {
 	GetAppointment(ctx context.Context, id pgtype.UUID) (Appointment, error)
 	GetAppointmentCountForPeriod(ctx context.Context, arg GetAppointmentCountForPeriodParams) (int64, error)
 	GetClient(ctx context.Context, id pgtype.UUID) (Client, error)
-	GetExpensesForPeriod(ctx context.Context, arg GetExpensesForPeriodParams) (interface{}, error)
+	GetExpensesForPeriod(ctx context.Context, arg GetExpensesForPeriodParams) (pgtype.Numeric, error)
 	GetSessionByID(ctx context.Context, id pgtype.UUID) (Session, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id pgtype.UUID) (User, error)

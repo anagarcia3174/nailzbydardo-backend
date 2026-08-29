@@ -75,7 +75,7 @@ type ListClientAppointmentsRow struct {
 	LateFee       pgtype.Numeric     `json:"late_fee"`
 	PaymentMethod NullPaymentMethod  `json:"payment_method"`
 	Notes         pgtype.Text        `json:"notes"`
-	LoyaltyReward pgtype.Bool        `json:"loyalty_reward"`
+	LoyaltyReward bool               `json:"loyalty_reward"`
 	Tip           pgtype.Numeric     `json:"tip"`
 	CreatedAt     pgtype.Timestamptz `json:"created_at"`
 }

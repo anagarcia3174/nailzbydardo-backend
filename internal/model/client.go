@@ -1,4 +1,4 @@
-package model
+ package model
 
 import "time"
 
@@ -10,4 +10,10 @@ type Client struct {
     Birthday      *time.Time `json:"birthday"`
     CreatedAt     time.Time  `json:"created_at"`
     DeletedAt     *time.Time `json:"deleted_at"`
+}
+
+type ClientSummary struct {
+    ID            string  `json:"id"`
+    ClientName    string  `json:"client_name"`
+    ContactMethod *string `json:"contact_method"`
 }

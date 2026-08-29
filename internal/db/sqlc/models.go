@@ -150,7 +150,7 @@ type Appointment struct {
 	PaymentMethod NullPaymentMethod  `json:"payment_method"`
 	Notes         pgtype.Text        `json:"notes"`
 	ReceiptUrl    pgtype.Text        `json:"receipt_url"`
-	LoyaltyReward pgtype.Bool        `json:"loyalty_reward"`
+	LoyaltyReward bool               `json:"loyalty_reward"`
 	Tip           pgtype.Numeric     `json:"tip"`
 	CreatedAt     pgtype.Timestamptz `json:"created_at"`
 }

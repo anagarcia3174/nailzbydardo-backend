@@ -8,5 +8,5 @@ SELECT id, expense_name, price, date_purchased, receipt_url, created_at FROM exp
 DELETE FROM expenses WHERE id = $1;
 
 -- name: GetExpensesForPeriod :one
-SELECT COALESCE(SUM(price), 0) AS total FROM expenses
+SELECT COALESCE(SUM(price), 0)::numeric AS total FROM expenses
 WHERE date_purchased >= $1 AND date_purchased < $2;

@@ -1,0 +1,1 @@
+ALTER TABLE appointments ALTER COLUMN loyalty_reward SET NOT NULL;
