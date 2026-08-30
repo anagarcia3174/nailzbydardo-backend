@@ -15,8 +15,8 @@ type Config struct {
 	AppEnv            string
 }
 
-func Load() (*Config, error) {
-	err := godotenv.Load()
+func Load(path string) (*Config, error) {
+	err := godotenv.Load(path)
 	if err != nil {
 		log.Printf("Error loading .env file: %v", err)
 	}
