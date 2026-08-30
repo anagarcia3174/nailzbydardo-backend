@@ -1,15 +1,16 @@
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE TYPE payment_method AS ENUM ('cash', 'zelle', 'cash_app', 'other');
 CREATE TYPE appointment_status AS ENUM ('booked', 'complete', 'no_show', 'cancelled');
 CREATE TYPE discount_type AS ENUM ('amount', 'percent');
 
 CREATE TABLE IF NOT EXISTS users (
-    id UUID PRIMARY KEY DEFAULT uuidv7(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE TABLE IF NOT EXISTS sessions (
-    id UUID PRIMARY KEY DEFAULT uuidv7(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
     expires_at TIMESTAMPTZ NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -21,7 +22,7 @@ CREATE TABLE IF NOT EXISTS sessions (
 CREATE INDEX idx_sessions_user_id ON sessions(user_id);
 CREATE INDEX idx_sessions_expires_at ON sessions(expires_at);
 CREATE TABLE IF NOT EXISTS clients (
-    id UUID PRIMARY KEY DEFAULT uuidv7(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     client_name VARCHAR(255) NOT NULL,
     contact_method VARCHAR(255),
     notes TEXT,
@@ -31,14 +32,14 @@ CREATE TABLE IF NOT EXISTS clients (
 
 );
 CREATE TABLE IF NOT EXISTS services (
-    id UUID PRIMARY KEY DEFAULT uuidv7(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     service_name VARCHAR(255) NOT NULL,
     price NUMERIC(10,  2) NOT NULL CHECK (price >= 0),
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 
 );
 CREATE TABLE IF NOT EXISTS expenses (
-    id UUID PRIMARY KEY DEFAULT uuidv7(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     expense_name VARCHAR(255) NOT NULL,
     price NUMERIC(10,2) NOT NULL CHECK (price >= 0),
     date_purchased DATE NOT NULL,
@@ -46,7 +47,7 @@ CREATE TABLE IF NOT EXISTS expenses (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE TABLE IF NOT EXISTS appointments (
-    id UUID PRIMARY KEY DEFAULT uuidv7(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     client_id UUID NOT NULL,
     appt_date TIMESTAMPTZ NOT NULL,
     appt_status appointment_status DEFAULT 'booked' NOT NULL,
@@ -66,7 +67,7 @@ CREATE TABLE IF NOT EXISTS appointments (
 CREATE INDEX idx_appointments_client_id ON appointments(client_id);
 CREATE INDEX idx_appointments_appt_date ON appointments(appt_date);
 CREATE TABLE IF NOT EXISTS appointment_services (
-    id UUID PRIMARY KEY DEFAULT uuidv7(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     appointment_id UUID NOT NULL,
     service_name VARCHAR(255) NOT NULL,
     service_price NUMERIC(10,2) NOT NULL CHECK (service_price >= 0),
@@ -80,7 +81,7 @@ CREATE TABLE IF NOT EXISTS appointment_services (
 );
 CREATE INDEX idx_appointment_services_appointment_id ON appointment_services(appointment_id);
 CREATE TABLE IF NOT EXISTS appointment_discounts (
-    id UUID PRIMARY KEY DEFAULT uuidv7(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     appointment_id UUID NOT NULL,
     discount_name TEXT NOT NULL,
     discount_type discount_type NOT NULL,
