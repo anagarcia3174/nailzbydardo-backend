@@ -11,19 +11,19 @@ import (
 )
 
 type AppointmentTotal struct {
-	Subtotal      int64
-	DiscountTotal int64
-	ServiceTotal  int64
-	Tip           int64
-	GrandTotal    int64
+	Subtotal      int64 `json:"subtotal"`
+	DiscountTotal int64 `json:"discount_total"`
+	ServiceTotal  int64 `json:"service_total"`
+	Tip           int64 `json:"tip"`
+	GrandTotal    int64 `json:"grand_total"`
 }
 
 type AppointmentService struct {
 	appointmentRepo *repository.AppointmentRepository
-	clientRepo *repository.ClientRepository
+	clientRepo      *repository.ClientRepository
 }
 
-func NewAppointmentService(appointmentRepo *repository.AppointmentRepository, clientRepo *repository.ClientRepository) *AppointmentService{
+func NewAppointmentService(appointmentRepo *repository.AppointmentRepository, clientRepo *repository.ClientRepository) *AppointmentService {
 	return &AppointmentService{appointmentRepo: appointmentRepo, clientRepo: clientRepo}
 }
 
@@ -50,6 +50,9 @@ func (s *AppointmentService) ListAppointmentsByDateRange(ctx context.Context, da
 func (s *AppointmentService) ListUpcomingAppointments(ctx context.Context) ([]model.Appointment, error) {
 	return s.appointmentRepo.ListUpcomingAppointments(ctx)
 }
+func (s *AppointmentService) ListCompleteAppointmentsForPeriod(ctx context.Context, dateOne time.Time, dateTwo time.Time) ([]model.AppointmentSummary, error) {
+	return s.appointmentRepo.ListCompleteAppointmentsForPeriod(ctx, dateOne, dateTwo)
+}
 func (s *AppointmentService) GetAppointmentDetail(ctx context.Context, id string) (model.AppointmentDetail, error) {
 	return s.appointmentRepo.GetAppointmentDetail(ctx, id)
 }
@@ -62,11 +65,11 @@ func (s *AppointmentService) DeleteAppointment(ctx context.Context, id string) e
 	return s.appointmentRepo.DeleteAppointment(ctx, id)
 }
 
-
 func (s *AppointmentService) AddAppointmentService(ctx context.Context, appointmentID string, serviceName string, servicePrice int64, designPrice int64) (model.AppointmentService, error) {
 	return s.appointmentRepo.CreateAppointmentService(ctx, appointmentID, serviceName, servicePrice, designPrice)
 }
-//no need for validation as we are passing in the service's id not the appointments
+
+// no need for validation as we are passing in the service's id not the appointments
 func (s *AppointmentService) RemoveAppointmentService(ctx context.Context, id string) error {
 	return s.appointmentRepo.DeleteAppointmentService(ctx, id)
 }
@@ -82,27 +85,6 @@ func (s *AppointmentService) AddAppointmentDiscount(ctx context.Context, appoint
 func (s *AppointmentService) RemoveAppointmentDiscount(ctx context.Context, id string) error {
 	return s.appointmentRepo.DeleteAppointmentDiscount(ctx, id)
 }
-
-// ---- CalculateAppointmentTotal ----
-// NOT a passthrough — this is where the actual money math lives, the
-// payoff for keeping revenue/discount calculations out of SQL.
-// Takes an assembled model.AppointmentDetail (or fetches one internally
-// via GetAppointmentDetail).
-// Steps:
-// 1. Sum all AppointmentServices' ServicePrice + DesignPrice -> subtotal.
-// 2. Apply each AppointmentDiscount:
-//    - type "amount": subtract discount_value directly (in cents).
-//    - type "percent": subtract (subtotal_at_this_point * discount_value / 100).
-//      Decide: do percent discounts apply to the running total after
-//      previous discounts, or always against the original subtotal?
-//      This is a real business decision if you ever allow multiple
-//      discounts on one appointment — worth deciding explicitly.
-// 3. Add tip separately if your definition of "total" includes it
-//    (or keep tip reported separately, since tip isn't really part of
-//    "service revenue" in most accounting contexts — worth deciding).
-// 4. Return the computed total (int64 cents), possibly alongside a
-//    breakdown (subtotal, discount amount, final total) if the
-//    frontend wants to display each line.
 func (s *AppointmentService) CalculateAppointmentTotal(ctx context.Context, appointmentID string) (AppointmentTotal, error) {
 	detail, err := s.appointmentRepo.GetAppointmentDetail(ctx, appointmentID)
 	if err != nil {
@@ -141,4 +123,8 @@ func (s *AppointmentService) CalculateAppointmentTotal(ctx context.Context, appo
 		Tip:           tip,
 		GrandTotal:    serviceTotal + tip,
 	}, nil
+}
+
+func (s *AppointmentService) GetAppointmentCountForPeriod(ctx context.Context, dateOne time.Time, dateTwo time.Time) (int64, error) {
+	return s.appointmentRepo.GetAppointmentCountForPeriod(ctx, dateOne, dateTwo)
 }

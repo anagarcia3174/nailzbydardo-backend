@@ -45,7 +45,7 @@ func (r *UserRepository) GetUserByEmail(ctx context.Context, email string) (mode
 func (r *UserRepository) GetUserByID(ctx context.Context, id string) (model.User, error) {
 	uuid, err := stringToPgUUID(id)
 	if err != nil {
-		return model.User{}, fmt.Errorf("error converting string to uuid: %w", err)
+		return model.User{}, ErrInvalidID
 	}
 
 	sqlcUser, err := r.q.GetUserByID(ctx, uuid)

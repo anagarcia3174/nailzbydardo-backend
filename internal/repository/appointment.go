@@ -23,7 +23,7 @@ func NewAppointmentRepository(q *sqlc.Queries) *AppointmentRepository {
 func (r *AppointmentRepository) CreateAppointment(ctx context.Context, clientID string, appointmentDate time.Time, notes *string) (model.Appointment, error) {
 	pgID, err := stringToPgUUID(clientID)
 	if err != nil {
-		return model.Appointment{}, fmt.Errorf("error converting id to uuid: %w", err)
+		return model.Appointment{}, ErrInvalidID
 	}
 	createAppointmentParams := sqlc.CreateAppointmentParams{
 		ClientID: pgID,
@@ -61,7 +61,7 @@ func (r *AppointmentRepository) CreateAppointment(ctx context.Context, clientID 
 func (r *AppointmentRepository) GetAppointment(ctx context.Context, id string) (model.Appointment, error) {
 	pgID, err := stringToPgUUID(id)
 	if err != nil {
-		return model.Appointment{}, fmt.Errorf("error converting id to uuid: %w", err)
+		return model.Appointment{}, ErrInvalidID
 	}
 	a, err := r.q.GetAppointment(ctx, pgID)
 	if err != nil {
@@ -99,7 +99,7 @@ func (r *AppointmentRepository) ListAppointments(ctx context.Context) ([]model.A
 	if err != nil {
 		return []model.Appointment{}, fmt.Errorf("error getting appointments:  %w", err)
 	}
-	var appointments []model.Appointment
+	appointments := []model.Appointment{}
 	for _, a := range appointmentRows {
 		appointmentID, err := pgUUIDToString(a.ID)
 		if err != nil {
@@ -136,7 +136,7 @@ func (r *AppointmentRepository) ListAppointmentsByDateRange(ctx context.Context,
 	if err != nil {
 		return []model.Appointment{}, fmt.Errorf("error getting appointments:  %w", err)
 	}
-	var appointments []model.Appointment
+	appointments := []model.Appointment{}
 	for _, a := range appointmentRows {
 		appointmentID, err := pgUUIDToString(a.ID)
 		if err != nil {
@@ -173,7 +173,7 @@ func (r *AppointmentRepository) ListCompleteAppointmentsForPeriod(ctx context.Co
 	if err != nil {
 		return []model.AppointmentSummary{}, fmt.Errorf("error getting complete appointments:  %w", err)
 	}
-	var appointments []model.AppointmentSummary
+	appointments := []model.AppointmentSummary{}
 	for _, a := range appointmentRows {
 		appointmentID, err := pgUUIDToString(a.ID)
 		if err != nil {
@@ -194,7 +194,7 @@ func (r *AppointmentRepository) ListUpcomingAppointments(ctx context.Context) ([
 	if err != nil {
 		return []model.Appointment{}, fmt.Errorf("error getting upcoming appointments: %w", err)
 	}
-	var appointments []model.Appointment
+	appointments := []model.Appointment{}
 	for _, a := range appointmentRows {
 		appointmentID, err := pgUUIDToString(a.ID)
 		if err != nil {
@@ -237,7 +237,7 @@ func (r *AppointmentRepository) GetAppointmentCountForPeriod(ctx context.Context
 func (r *AppointmentRepository) UpdateAppointment(ctx context.Context, id string, apptDate time.Time, apptStatus sqlc.AppointmentStatus, lateFee *int64, paymentMethod *sqlc.PaymentMethod, notes *string, receiptURL *string, loyaltyReward bool, tip *int64) (model.Appointment, error) {
 	pgID, err := stringToPgUUID(id)
 	if err != nil {
-		return model.Appointment{}, fmt.Errorf("error converting id to uuid: %w", err)
+		return model.Appointment{}, ErrInvalidID
 	}
 	params := sqlc.UpdateAppointmentParams{
 		ID:            pgID,
@@ -285,7 +285,7 @@ func (r *AppointmentRepository) UpdateAppointment(ctx context.Context, id string
 func (r *AppointmentRepository) DeleteAppointment(ctx context.Context, id string) error {
 	pgID, err := stringToPgUUID(id)
 	if err != nil {
-		return fmt.Errorf("error converting id to uuid: %w", err)
+		return ErrInvalidID
 	}
 	err = r.q.DeleteAppointment(ctx, pgID)
 	if err != nil {
@@ -297,7 +297,7 @@ func (r *AppointmentRepository) DeleteAppointment(ctx context.Context, id string
 func (r *AppointmentRepository) CreateAppointmentService(ctx context.Context, appointmentID string, serviceName string, servicePrice int64, designPrice int64) (model.AppointmentService, error) {
 	pgID, err := stringToPgUUID(appointmentID)
 	if err != nil {
-		return model.AppointmentService{}, fmt.Errorf("error converting id to uuid: %w", err)
+		return model.AppointmentService{}, ErrInvalidID
 	}
 	params := sqlc.CreateAppointmentServiceParams{
 		AppointmentID: pgID,
@@ -331,13 +331,13 @@ func (r *AppointmentRepository) CreateAppointmentService(ctx context.Context, ap
 func (r *AppointmentRepository) ListAppointmentServicesByAppointment(ctx context.Context, appointmentID string) ([]model.AppointmentServiceSummary, error) {
 	pgID, err := stringToPgUUID(appointmentID)
 	if err != nil {
-		return []model.AppointmentServiceSummary{}, fmt.Errorf("error converting id to uuid: %w", err)
+		return []model.AppointmentServiceSummary{}, ErrInvalidID
 	}
 	appointmentServiceRows, err := r.q.ListAppointmentServicesByAppointment(ctx, pgID)
 	if err != nil {
 		return []model.AppointmentServiceSummary{}, fmt.Errorf("error getting appointment services: %w", err)
 	}
-	var appointmentServices []model.AppointmentServiceSummary
+	appointmentServices := []model.AppointmentServiceSummary{}
 	for _, a := range appointmentServiceRows {
 		serviceID, err := pgUUIDToString(a.ID)
 		if err != nil {
@@ -358,7 +358,7 @@ func (r *AppointmentRepository) ListAppointmentServicesByAppointment(ctx context
 func (r *AppointmentRepository) DeleteAppointmentService(ctx context.Context, id string) error {
 	pgID, err := stringToPgUUID(id)
 	if err != nil {
-		return fmt.Errorf("error converting id to uuid: %w", err)
+		return ErrInvalidID
 	}
 	err = r.q.DeleteAppointmentService(ctx, pgID)
 	if err != nil {
@@ -370,7 +370,7 @@ func (r *AppointmentRepository) DeleteAppointmentService(ctx context.Context, id
 func (r *AppointmentRepository) CreateAppointmentDiscount(ctx context.Context, appointmentID string, discountName string, discountType sqlc.DiscountType, discountValue int64) (model.AppointmentDiscount, error) {
 	pgID, err := stringToPgUUID(appointmentID)
 	if err != nil {
-		return model.AppointmentDiscount{}, fmt.Errorf("error converting id to uuid: %w", err)
+		return model.AppointmentDiscount{}, ErrInvalidID
 	}
 	var pgValue pgtype.Numeric
 	if discountType == sqlc.DiscountTypePercent {
@@ -415,13 +415,13 @@ if a.DiscountType == sqlc.DiscountTypePercent {
 func (r *AppointmentRepository) ListAppointmentDiscountsByAppointment(ctx context.Context, appointmentID string) ([]model.AppointmentDiscountSummary, error) {
 	pgID, err := stringToPgUUID(appointmentID)
 	if err != nil {
-		return []model.AppointmentDiscountSummary{}, fmt.Errorf("error converting id to uuid: %w", err)
+		return []model.AppointmentDiscountSummary{}, ErrInvalidID
 	}
 	appointmentDiscountRows, err := r.q.ListAppointmentDiscountsByAppointment(ctx, pgID)
 	if err != nil {
 		return []model.AppointmentDiscountSummary{}, fmt.Errorf("error getting appointment discounts: %w", err)
 	}
-	var appointmentDiscounts []model.AppointmentDiscountSummary
+	appointmentDiscounts := []model.AppointmentDiscountSummary{}
 	for _, a := range appointmentDiscountRows {
 		discountID, err := pgUUIDToString(a.ID)
 		if err != nil {
@@ -447,7 +447,7 @@ if a.DiscountType == sqlc.DiscountTypePercent {
 func (r *AppointmentRepository) DeleteAppointmentDiscount(ctx context.Context, id string) error {
 	pgID, err := stringToPgUUID(id)
 	if err != nil {
-		return fmt.Errorf("error converting id to uuid: %w", err)
+		return ErrInvalidID
 	}
 	err = r.q.DeleteAppointmentDiscount(ctx, pgID)
 	if err != nil {

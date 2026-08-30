@@ -50,7 +50,7 @@ func (r *ExpenseRepository) ListExpenses(ctx context.Context) ([]model.Expense, 
 	if err != nil {
 		return []model.Expense{}, fmt.Errorf("error getting expenses: %w", err)
 	}
-	var expenses []model.Expense
+	expenses := []model.Expense{}
 	for _, e := range expenseRows {
 		id, err := pgUUIDToString(e.ID)
 		if err != nil {
@@ -72,7 +72,7 @@ func (r *ExpenseRepository) ListExpenses(ctx context.Context) ([]model.Expense, 
 func (r *ExpenseRepository) DeleteExpense(ctx context.Context, id string) error {
 	pgID, err := stringToPgUUID(id)
 	if err != nil {
-		return fmt.Errorf("error converting id to uuid: %w", err)
+		return ErrInvalidID
 	}
 	err = r.q.DeleteExpense(ctx, pgID)
 	if err != nil {

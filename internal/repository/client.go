@@ -54,7 +54,7 @@ func (r *ClientRepository) CreateClient(ctx context.Context, name string, contac
 func (r *ClientRepository) GetClient(ctx context.Context, id string) (model.Client, error) {
 	pgID, err := stringToPgUUID(id)
 	if err != nil {
-		return model.Client{}, fmt.Errorf("error converting string to uuid: %w", err)
+		return model.Client{}, ErrInvalidID
 	}
 	c, err := r.q.GetClient(ctx, pgID)
 	if err != nil {
@@ -85,7 +85,7 @@ func (r *ClientRepository) ListClients(ctx context.Context) ([]model.ClientSumma
 	if err != nil {
 		return []model.ClientSummary{}, fmt.Errorf("error getting list of clients: %w", err)
 	}
-	var clients []model.ClientSummary
+	clients := []model.ClientSummary{}
 	for _, c := range clientRows {
 		id, err := pgUUIDToString(c.ID)
 		if err != nil {
@@ -104,7 +104,7 @@ func (r *ClientRepository) ListClients(ctx context.Context) ([]model.ClientSumma
 func (r *ClientRepository) UpdateClient(ctx context.Context, id string, name string, contactMethod *string, notes *string, birthday *time.Time) (model.Client, error) {
 	pgID, err := stringToPgUUID(id)
 	if err != nil {
-		return model.Client{}, fmt.Errorf("error converting id to uuid: %w", err)
+		return model.Client{}, ErrInvalidID
 	}
 	updateClientParams := sqlc.UpdateClientParams{
 		ID: pgID,
@@ -139,7 +139,7 @@ func (r *ClientRepository) UpdateClient(ctx context.Context, id string, name str
 func (r *ClientRepository) SoftDeleteClient(ctx context.Context, id string) error {
 	pgID, err := stringToPgUUID(id)
 	if err != nil {
-		return fmt.Errorf("error converting id to uuid: %w", err)
+		return ErrInvalidID
 	}
 	err = r.q.SoftDeleteClient(ctx, pgID)
 	if err != nil {
@@ -151,13 +151,13 @@ func (r *ClientRepository) SoftDeleteClient(ctx context.Context, id string) erro
 func (r *ClientRepository) ListClientAppointments(ctx context.Context, id string) ([]model.Appointment, error){
 	pgID, err := stringToPgUUID(id)
 	if err != nil {
-		return []model.Appointment{}, fmt.Errorf("error converting id to uuid: %w", err)
+		return []model.Appointment{}, ErrInvalidID
 	}
 	clientAppointmentsRows, err := r.q.ListClientAppointments(ctx, pgID)
 	if err != nil {
 		return []model.Appointment{}, fmt.Errorf("error getting client's appointments: %w", err)
 	}
-	var clientAppointments []model.Appointment
+	clientAppointments := []model.Appointment{}
 	for _, a := range clientAppointmentsRows {
 		id, err := pgUUIDToString(a.ID)
 		if err != nil {

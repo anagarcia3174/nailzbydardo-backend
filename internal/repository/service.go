@@ -48,7 +48,7 @@ func (r *ServiceRepository) ListServices(ctx context.Context) ([]model.Service, 
 	if err != nil {
 		return []model.Service{}, fmt.Errorf("error getting service rows: %w", err)
 	}
-	var services []model.Service
+	services := []model.Service{}
 	for _, s := range serviceRows {
 		id,  err := pgUUIDToString(s.ID)
 		if err != nil {
@@ -68,7 +68,7 @@ func (r *ServiceRepository) ListServices(ctx context.Context) ([]model.Service, 
 func (r *ServiceRepository) UpdateService(ctx context.Context, id string, name string, price int64) (model.Service, error) {
 	pgID, err := stringToPgUUID(id)
 	if err != nil {
-		return model.Service{}, fmt.Errorf("error converting string to uuid: %w", err)
+		return model.Service{}, ErrInvalidID
 	}
 	updateServiceParams := sqlc.UpdateServiceParams{
 		ID: pgID,
@@ -98,7 +98,7 @@ func (r *ServiceRepository) UpdateService(ctx context.Context, id string, name s
 func (r *ServiceRepository) DeleteService(ctx context.Context, id string) error {
 	pgID, err := stringToPgUUID(id)
 	if err != nil {
-		return fmt.Errorf("error converting id to uuid: %w", err)
+		return ErrInvalidID
 	}
 	err = r.q.DeleteService(ctx, pgID)
 	if err != nil {

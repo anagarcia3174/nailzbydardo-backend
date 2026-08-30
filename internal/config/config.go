@@ -12,6 +12,7 @@ type Config struct {
 	DatabaseURL       string
 	Port              string
 	SessionCookieName string
+	AppEnv            string
 }
 
 func Load() (*Config, error) {
@@ -32,11 +33,19 @@ func Load() (*Config, error) {
 	if SessionCookieName == "" {
 		return nil, errors.New("Missing session cookie name")
 	}
-
+	AppEnv := os.Getenv("APP_ENV")
+	if AppEnv == "" {
+		AppEnv = "development"
+	}
 	config := Config{
-		DatabaseURL: DatabaseURL,
-		Port: PORT,
+		DatabaseURL:       DatabaseURL,
+		Port:              PORT,
 		SessionCookieName: SessionCookieName,
+		AppEnv:            AppEnv,
 	}
 	return &config, nil
+}
+
+func (c *Config) IsProduction() bool {
+	return c.AppEnv == "production"
 }

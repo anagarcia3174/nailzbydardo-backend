@@ -22,7 +22,7 @@ func NewSessionRepository(q *sqlc.Queries) *SessionRepository {
 func (r *SessionRepository) CreateSession(ctx context.Context, userID string, expiresAt time.Time) (model.Session, error) {
 	pgID, err := stringToPgUUID(userID)
 	if err != nil {
-		return model.Session{}, fmt.Errorf("error converting string to uuid: %w", err)
+		return model.Session{}, ErrInvalidID
 	}
 	timestamptz := timeToPgTimestamptz(expiresAt)
 
@@ -57,7 +57,7 @@ func (r *SessionRepository) CreateSession(ctx context.Context, userID string, ex
 func (r *SessionRepository) GetSessionByID(ctx context.Context, id string) (model.Session, error) {
 	pgID, err := stringToPgUUID(id)
 	if err != nil {
-		return model.Session{}, fmt.Errorf("error converting string to uuid: %w", err)
+		return model.Session{}, ErrInvalidID
 	}
 
 	s, err := r.q.GetSessionByID(ctx, pgID)
@@ -89,7 +89,7 @@ func (r *SessionRepository) GetSessionByID(ctx context.Context, id string) (mode
 func (r *SessionRepository) DeleteSession(ctx context.Context, id string) error {
 	pgID, err := stringToPgUUID(id)
 	if err != nil {
-		return fmt.Errorf("error converting string to uuid: %w", err)
+		return ErrInvalidID
 	}
 
 	err = r.q.DeleteSession(ctx, pgID)
