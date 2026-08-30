@@ -13,6 +13,7 @@ type Config struct {
 	Port              string
 	SessionCookieName string
 	AppEnv            string
+	FrontendURL       string
 }
 
 func Load(path string) (*Config, error) {
@@ -37,11 +38,16 @@ func Load(path string) (*Config, error) {
 	if AppEnv == "" {
 		AppEnv = "development"
 	}
+	FrontendURL := os.Getenv("FRONTEND_URL")
+	if FrontendURL == "" {
+		return nil, errors.New("Missing frontend url")
+	}
 	config := Config{
 		DatabaseURL:       DatabaseURL,
 		Port:              PORT,
 		SessionCookieName: SessionCookieName,
 		AppEnv:            AppEnv,
+		FrontendURL: FrontendURL,
 	}
 	return &config, nil
 }

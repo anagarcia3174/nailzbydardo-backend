@@ -37,5 +37,5 @@ import (
 	dashboardService := service.NewDashboardService(appointmentService, expenseService)
 	dashboardHandler := handler.NewDashboardHandler(dashboardService)
 	handlers := router.Handlers{Client: clientHandler, Health: healthHandler, Catalog: catalogHandler, Expense: expenseHandler, Appointment: appointmentHandler, Auth: authHandler, Dashboard: dashboardHandler}
-	return  router.New(handlers,  authMiddleware)
+	return  router.New(handlers,  authMiddleware, cfg.FrontendURL)
  }

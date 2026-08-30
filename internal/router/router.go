@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 )
 
 type Handlers struct {
@@ -18,8 +19,16 @@ type Handlers struct {
 	Dashboard   *handler.DashboardHandler
 }
 
-func New(h Handlers, authMiddleware func(http.Handler) http.Handler) *chi.Mux {
+func New(h Handlers, authMiddleware func(http.Handler) http.Handler, frontendURL string) *chi.Mux {
 	r := chi.NewRouter()
+
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   []string{frontendURL}, // set once you know it
+		AllowedMethods:   []string{"GET", "POST", "PATCH", "DELETE"},
+		AllowedHeaders:   []string{"Content-Type"},
+		AllowCredentials: true, // REQUIRED since you use cookies, not bearer tokens
+	}))
+
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
