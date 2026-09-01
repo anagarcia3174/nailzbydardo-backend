@@ -222,6 +222,27 @@ func (r *AppointmentRepository) ListUpcomingAppointments(ctx context.Context) ([
 	return appointments, nil
 }
 
+func (r *AppointmentRepository) ListUpcomingAppointmentsForDashboard(ctx context.Context) ([]model.AppointmentForDashboard, error) {
+	appointmentRows, err := r.q.ListUpcomingAppointmentsForDashboard(ctx)
+	if err != nil {
+		return []model.AppointmentForDashboard{}, fmt.Errorf("error getting upcoming appointments: %w", err)
+	}
+	appointments := []model.AppointmentForDashboard{}
+	for _, a := range appointmentRows {
+		appointmentID, err := pgUUIDToString(a.ID)
+		if err != nil {
+			return []model.AppointmentForDashboard{}, fmt.Errorf("error converting uuid to id: %w", err)
+		}
+		appointment := model.AppointmentForDashboard{
+			ID:         appointmentID,
+			ApptDate:   pgTimestamptzToTime(a.ApptDate),
+			ClientName: a.ClientName,
+		}
+		appointments = append(appointments, appointment)
+	}
+	return appointments, nil
+}
+
 func (r *AppointmentRepository) GetAppointmentCountForPeriod(ctx context.Context, dateOne time.Time, dateTwo time.Time) (int64, error) {
 	params := sqlc.GetAppointmentCountForPeriodParams{
 		ApptDate:   timeToPgTimestamptz(dateOne),
@@ -396,11 +417,11 @@ func (r *AppointmentRepository) CreateAppointmentDiscount(ctx context.Context, a
 	if err != nil {
 		return model.AppointmentDiscount{}, fmt.Errorf("error converting uuid to id: %w", err)
 	}
-if a.DiscountType == sqlc.DiscountTypePercent {
-    discountValue = pgNumericToInt(a.DiscountValue)
-} else {
-    discountValue = pgNumericToCents(a.DiscountValue)
-}
+	if a.DiscountType == sqlc.DiscountTypePercent {
+		discountValue = pgNumericToInt(a.DiscountValue)
+	} else {
+		discountValue = pgNumericToCents(a.DiscountValue)
+	}
 	discount := model.AppointmentDiscount{
 		ID:            discountID,
 		AppointmentID: apptID,
@@ -428,11 +449,11 @@ func (r *AppointmentRepository) ListAppointmentDiscountsByAppointment(ctx contex
 			return []model.AppointmentDiscountSummary{}, fmt.Errorf("error converting uuid to id: %w", err)
 		}
 		var value int64
-if a.DiscountType == sqlc.DiscountTypePercent {
-    value = pgNumericToInt(a.DiscountValue)
-} else {
-    value = pgNumericToCents(a.DiscountValue)
-}
+		if a.DiscountType == sqlc.DiscountTypePercent {
+			value = pgNumericToInt(a.DiscountValue)
+		} else {
+			value = pgNumericToCents(a.DiscountValue)
+		}
 		discount := model.AppointmentDiscountSummary{
 			ID:            discountID,
 			DiscountName:  a.DiscountName,

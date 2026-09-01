@@ -90,3 +90,13 @@ func (h *ClientHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusNoContent)
 }
+
+func (h *ClientHandler) GetTotalSpent(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	spent, err := h.clientService.GetClientTotalSpent(r.Context(), id)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, spent)
+}

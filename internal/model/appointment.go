@@ -59,3 +59,9 @@ type AppointmentDiscountSummary struct {
 	DiscountType  sqlc.DiscountType `json:"discount_type"`
 	DiscountValue int64             `json:"discount_value"`
 }
+
+type AppointmentForDashboard struct {
+	ID            string                 `json:"id"`
+	ApptDate      time.Time              `json:"appt_date"`
+	ClientName    string     `json:"client_name"`
+}

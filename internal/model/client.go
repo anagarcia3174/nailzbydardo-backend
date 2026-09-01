@@ -17,3 +17,8 @@ type ClientSummary struct {
     ClientName    string  `json:"client_name"`
     ContactMethod *string `json:"contact_method"`
 }
+
+type ClientSpent struct {
+    TotalSpent int64 `json:"total_spent"`
+    TotalTips int64 `json:"total_tips"`
+}

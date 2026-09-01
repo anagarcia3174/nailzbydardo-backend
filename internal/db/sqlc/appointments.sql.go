@@ -249,6 +249,47 @@ func (q *Queries) ListUpcomingAppointments(ctx context.Context) ([]Appointment, 
 	return items, nil
 }
 
+const listUpcomingAppointmentsForDashboard = `-- name: ListUpcomingAppointmentsForDashboard :many
+SELECT
+    appointments.id,
+    appointments.appt_date,
+    clients.client_name
+FROM appointments
+JOIN clients
+    ON appointments.client_id = clients.id
+WHERE appointments.appt_date > now()
+  AND appointments.appt_status != 'cancelled'
+  AND clients.deleted_at IS NULL
+ORDER BY appointments.appt_date ASC
+LIMIT 5
+`
+
+type ListUpcomingAppointmentsForDashboardRow struct {
+	ID         pgtype.UUID        `json:"id"`
+	ApptDate   pgtype.Timestamptz `json:"appt_date"`
+	ClientName string             `json:"client_name"`
+}
+
+func (q *Queries) ListUpcomingAppointmentsForDashboard(ctx context.Context) ([]ListUpcomingAppointmentsForDashboardRow, error) {
+	rows, err := q.db.Query(ctx, listUpcomingAppointmentsForDashboard)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListUpcomingAppointmentsForDashboardRow{}
+	for rows.Next() {
+		var i ListUpcomingAppointmentsForDashboardRow
+		if err := rows.Scan(&i.ID, &i.ApptDate, &i.ClientName); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateAppointment = `-- name: UpdateAppointment :one
 UPDATE appointments
 SET appt_date = $2, appt_status = $3, late_fee = $4, payment_method = $5, notes = $6, receipt_url = $7, loyalty_reward = $8, tip = $9

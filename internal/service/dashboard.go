@@ -7,7 +7,7 @@ import (
 )
 
 type DashboardSummary struct {
-	UpcomingAppointments    []model.Appointment `json:"upcoming_appointments"`
+	UpcomingAppointments    []model.AppointmentForDashboard `json:"upcoming_appointments"`
 	MonthlyRevenue          int64               `json:"monthly_revenue"`
 	MonthlyTips             int64               `json:"monthly_tips"`
 	MonthlyAppointmentCount int64               `json:"monthly_appointment_count"`
@@ -41,7 +41,7 @@ func (s *DashboardService) GetDashboard(ctx context.Context) (DashboardSummary, 
 	)
 	startOfNextMonth := startOfMonth.AddDate(0, 1, 0)
 
-	upcoming, err := s.appointmentService.ListUpcomingAppointments(ctx)
+	upcoming, err := s.appointmentService.ListUpcomingAppointmentsForDashboard(ctx)
 	if err != nil {
 		return DashboardSummary{}, err
 	}

@@ -50,6 +50,9 @@ func (s *AppointmentService) ListAppointmentsByDateRange(ctx context.Context, da
 func (s *AppointmentService) ListUpcomingAppointments(ctx context.Context) ([]model.Appointment, error) {
 	return s.appointmentRepo.ListUpcomingAppointments(ctx)
 }
+func (s *AppointmentService) ListUpcomingAppointmentsForDashboard(ctx context.Context) ([]model.AppointmentForDashboard, error) {
+	return s.appointmentRepo.ListUpcomingAppointmentsForDashboard(ctx)
+}
 func (s *AppointmentService) ListCompleteAppointmentsForPeriod(ctx context.Context, dateOne time.Time, dateTwo time.Time) ([]model.AppointmentSummary, error) {
 	return s.appointmentRepo.ListCompleteAppointmentsForPeriod(ctx, dateOne, dateTwo)
 }

@@ -43,6 +43,7 @@ type Querier interface {
 	ListExpenses(ctx context.Context) ([]Expense, error)
 	ListServices(ctx context.Context) ([]Service, error)
 	ListUpcomingAppointments(ctx context.Context) ([]Appointment, error)
+	ListUpcomingAppointmentsForDashboard(ctx context.Context) ([]ListUpcomingAppointmentsForDashboardRow, error)
 	SoftDeleteClient(ctx context.Context, id pgtype.UUID) error
 	UpdateAppointment(ctx context.Context, arg UpdateAppointmentParams) (Appointment, error)
 	UpdateClient(ctx context.Context, arg UpdateClientParams) (Client, error)

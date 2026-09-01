@@ -13,11 +13,13 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-
- func BuildHandlers(pool *pgxpool.Pool, cfg *config.Config) *chi.Mux {
+func BuildHandlers(pool *pgxpool.Pool, cfg *config.Config) *chi.Mux {
 	q := sqlc.New(pool)
 	clientRepo := repository.NewClientRepository(q)
-	clientService := service.NewClientService(clientRepo)
+	appointmentRepo := repository.NewAppointmentRepository(q)
+	appointmentService := service.NewAppointmentService(appointmentRepo, clientRepo)
+	appointmentHandler := handler.NewAppointmentHandler(appointmentService)
+	clientService := service.NewClientService(clientRepo, appointmentService)
 	clientHandler := handler.NewClientHandler(clientService)
 	serviceRepo := repository.NewServiceRepository(q)
 	catalogService := service.NewCatalogService(serviceRepo)
@@ -26,9 +28,6 @@ import (
 	expenseRepo := repository.NewExpenseRepository(q)
 	expenseService := service.NewExpenseService(expenseRepo)
 	expenseHandler := handler.NewExpenseHandler(expenseService)
-	appointmentRepo := repository.NewAppointmentRepository(q)
-	appointmentService := service.NewAppointmentService(appointmentRepo, clientRepo)
-	appointmentHandler := handler.NewAppointmentHandler(appointmentService)
 	userRepo := repository.NewUserRepository(q)
 	sessionRepo := repository.NewSessionRepository(q)
 	authService := service.NewAuthService(userRepo, sessionRepo)
@@ -37,5 +36,5 @@ import (
 	dashboardService := service.NewDashboardService(appointmentService, expenseService)
 	dashboardHandler := handler.NewDashboardHandler(dashboardService)
 	handlers := router.Handlers{Client: clientHandler, Health: healthHandler, Catalog: catalogHandler, Expense: expenseHandler, Appointment: appointmentHandler, Auth: authHandler, Dashboard: dashboardHandler}
-	return  router.New(handlers,  authMiddleware, cfg.FrontendURL)
- }
+	return router.New(handlers, authMiddleware, cfg.FrontendURL)
+}

@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"nailzbydardo/internal/db/sqlc"
 	"nailzbydardo/internal/model"
 	"nailzbydardo/internal/repository"
 	"strings"
@@ -10,10 +11,11 @@ import (
 
 type ClientService struct {
 	clientRepo *repository.ClientRepository
+	appointmentService *AppointmentService
 }
 
-func NewClientService(clientRepo *repository.ClientRepository) *ClientService {
-	return &ClientService{clientRepo: clientRepo}
+func NewClientService(clientRepo *repository.ClientRepository, appointmentService *AppointmentService) *ClientService {
+	return &ClientService{clientRepo: clientRepo, appointmentService: appointmentService}
 }
 
 func (s *ClientService) CreateClient(ctx context.Context, name string, contactMethod *string, notes *string, birthday *time.Time) (model.Client, error) {
@@ -44,4 +46,24 @@ func (s *ClientService) SoftDeleteClient(ctx context.Context, id string) error {
 
 func (s *ClientService) GetClientAppointments(ctx context.Context, id string) ([]model.Appointment, error) {
 	return s.clientRepo.ListClientAppointments(ctx, id)
+}
+
+func (s *ClientService) GetClientTotalSpent(ctx context.Context, id string) (model.ClientSpent, error) {
+	appointments, err := s.clientRepo.ListClientAppointments(ctx, id)
+	if err != nil {
+		return model.ClientSpent{}, err
+	}
+
+	spent := model.ClientSpent{}
+	for _, a := range appointments{
+		if a.ApptStatus == sqlc.AppointmentStatusComplete {
+			total, err := s.appointmentService.CalculateAppointmentTotal(ctx, a.ID)
+			if err != nil {
+				return model.ClientSpent{}, err
+			}
+			spent.TotalSpent += total.ServiceTotal
+			spent.TotalTips += total.Tip
+		}
+	}
+	return spent, nil
 }

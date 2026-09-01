@@ -40,3 +40,17 @@ RETURNING id, client_id, appt_date, appt_status, late_fee, payment_method, notes
 
 -- name: DeleteAppointment :exec
 DELETE FROM appointments WHERE id = $1;
+
+-- name: ListUpcomingAppointmentsForDashboard :many
+SELECT
+    appointments.id,
+    appointments.appt_date,
+    clients.client_name
+FROM appointments
+JOIN clients
+    ON appointments.client_id = clients.id
+WHERE appointments.appt_date > now()
+  AND appointments.appt_status != 'cancelled'
+  AND clients.deleted_at IS NULL
+ORDER BY appointments.appt_date ASC
+LIMIT 5;
