@@ -23,10 +23,10 @@ func New(h Handlers, authMiddleware func(http.Handler) http.Handler, frontendURL
 	r := chi.NewRouter()
 
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{frontendURL}, 
+		AllowedOrigins:   []string{frontendURL}, // set once you know it
 		AllowedMethods:   []string{"GET", "POST", "PATCH", "DELETE"},
 		AllowedHeaders:   []string{"Content-Type"},
-		AllowCredentials: true,
+		AllowCredentials: true, // REQUIRED since you use cookies, not bearer tokens
 	}))
 
 	r.Use(middleware.Logger)

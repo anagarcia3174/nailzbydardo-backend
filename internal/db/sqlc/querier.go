@@ -27,6 +27,7 @@ type Querier interface {
 	DeleteSession(ctx context.Context, id pgtype.UUID) error
 	GetAppointment(ctx context.Context, id pgtype.UUID) (Appointment, error)
 	GetAppointmentCountForPeriod(ctx context.Context, arg GetAppointmentCountForPeriodParams) (int64, error)
+	GetAppointmentWithClient(ctx context.Context, id pgtype.UUID) (GetAppointmentWithClientRow, error)
 	GetClient(ctx context.Context, id pgtype.UUID) (Client, error)
 	GetExpensesForPeriod(ctx context.Context, arg GetExpensesForPeriodParams) (pgtype.Numeric, error)
 	GetSessionByID(ctx context.Context, id pgtype.UUID) (Session, error)
@@ -36,6 +37,7 @@ type Querier interface {
 	ListAppointmentServicesByAppointment(ctx context.Context, appointmentID pgtype.UUID) ([]ListAppointmentServicesByAppointmentRow, error)
 	ListAppointments(ctx context.Context) ([]Appointment, error)
 	ListAppointmentsByDateRange(ctx context.Context, arg ListAppointmentsByDateRangeParams) ([]Appointment, error)
+	ListAppointmentsWithClient(ctx context.Context) ([]ListAppointmentsWithClientRow, error)
 	ListClientAppointments(ctx context.Context, clientID pgtype.UUID) ([]ListClientAppointmentsRow, error)
 	ListClients(ctx context.Context) ([]ListClientsRow, error)
 	ListCompleteAppointmentsForPeriod(ctx context.Context, arg ListCompleteAppointmentsForPeriodParams) ([]ListCompleteAppointmentsForPeriodRow, error)

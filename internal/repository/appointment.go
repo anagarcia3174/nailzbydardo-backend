@@ -94,33 +94,22 @@ func (r *AppointmentRepository) GetAppointment(ctx context.Context, id string) (
 	return appointment, nil
 }
 
-func (r *AppointmentRepository) ListAppointments(ctx context.Context) ([]model.Appointment, error) {
-	appointmentRows, err := r.q.ListAppointments(ctx)
+func (r *AppointmentRepository) ListAppointments(ctx context.Context) ([]model.AppointmentWithClient, error) {
+	appointmentRows, err := r.q.ListAppointmentsWithClient(ctx)
 	if err != nil {
-		return []model.Appointment{}, fmt.Errorf("error getting appointments:  %w", err)
+		return []model.AppointmentWithClient{}, fmt.Errorf("error getting appointments:  %w", err)
 	}
-	appointments := []model.Appointment{}
+	appointments := []model.AppointmentWithClient{}
 	for _, a := range appointmentRows {
 		appointmentID, err := pgUUIDToString(a.ID)
 		if err != nil {
-			return []model.Appointment{}, fmt.Errorf("error converting uuid to id: %w", err)
+			return []model.AppointmentWithClient{}, fmt.Errorf("error converting uuid to id: %w", err)
 		}
-		clientID, err := pgUUIDToString(a.ClientID)
-		if err != nil {
-			return []model.Appointment{}, fmt.Errorf("error converting uuid to id: %w", err)
-		}
-		appointment := model.Appointment{
+		appointment := model.AppointmentWithClient{
 			ID:            appointmentID,
-			ClientID:      clientID,
 			ApptDate:      pgTimestamptzToTime(a.ApptDate),
 			ApptStatus:    a.ApptStatus,
-			LateFee:       pgNumericToCentsPtr(a.LateFee),
-			PaymentMethod: nullPaymentMethodToPtr(a.PaymentMethod),
-			Notes:         pgTextToStringPtr(a.Notes),
-			ReceiptURL:    pgTextToStringPtr(a.ReceiptUrl),
-			LoyaltyReward: a.LoyaltyReward,
-			Tip:           pgNumericToCentsPtr(a.Tip),
-			CreatedAt:     pgTimestamptzToTime(a.CreatedAt),
+			ClientName: a.ClientName,
 		}
 		appointments = append(appointments, appointment)
 	}
@@ -478,22 +467,66 @@ func (r *AppointmentRepository) DeleteAppointmentDiscount(ctx context.Context, i
 }
 
 func (r *AppointmentRepository) GetAppointmentDetail(ctx context.Context, id string) (model.AppointmentDetail, error) {
-	appt, err := r.GetAppointment(ctx, id)
-	if err != nil {
-		return model.AppointmentDetail{}, err
-	}
-	services, err := r.ListAppointmentServicesByAppointment(ctx, id)
-	if err != nil {
-		return model.AppointmentDetail{}, err
-	}
-	discounts, err := r.ListAppointmentDiscountsByAppointment(ctx, id)
-	if err != nil {
-		return model.AppointmentDetail{}, err
-	}
-	appointmentDetail := model.AppointmentDetail{
-		Appointment:          appt,
-		AppointmentServices:  services,
-		AppointmentDiscounts: discounts,
-	}
-	return appointmentDetail, nil
+    pgID, err := stringToPgUUID(id)
+    if err != nil {
+        return model.AppointmentDetail{}, ErrInvalidID
+    }
+
+    a, err := r.q.GetAppointmentWithClient(ctx, pgID)
+    if err != nil {
+        if errors.Is(err, pgx.ErrNoRows) {
+            return model.AppointmentDetail{}, ErrNotFound
+        }
+
+        return model.AppointmentDetail{}, fmt.Errorf("error getting appointment detail: %w", err)
+    }
+
+    appointmentID, err := pgUUIDToString(a.ID)
+    if err != nil {
+        return model.AppointmentDetail{}, fmt.Errorf("error converting uuid to id: %w", err)
+    }
+
+    clientID, err := pgUUIDToString(a.ClientID)
+    if err != nil {
+        return model.AppointmentDetail{}, fmt.Errorf("error converting uuid to id: %w", err)
+    }
+
+    appointment := model.Appointment{
+        ID:            appointmentID,
+        ClientID:      clientID,
+        ApptDate:      pgTimestamptzToTime(a.ApptDate),
+        ApptStatus:    a.ApptStatus,
+        LateFee:       pgNumericToCentsPtr(a.LateFee),
+        PaymentMethod: nullPaymentMethodToPtr(a.PaymentMethod),
+        Notes:         pgTextToStringPtr(a.Notes),
+        ReceiptURL:    pgTextToStringPtr(a.ReceiptUrl),
+        LoyaltyReward: a.LoyaltyReward,
+        Tip:           pgNumericToCentsPtr(a.Tip),
+        CreatedAt:     pgTimestamptzToTime(a.CreatedAt),
+    }
+
+    client := model.ClientSummary{
+        ID:            clientID,
+        ClientName:    a.ClientName,
+        ContactMethod: pgTextToStringPtr(a.ContactMethod),
+    }
+
+    services, err := r.ListAppointmentServicesByAppointment(ctx, id)
+    if err != nil {
+        return model.AppointmentDetail{}, err
+    }
+
+    discounts, err := r.ListAppointmentDiscountsByAppointment(ctx, id)
+    if err != nil {
+        return model.AppointmentDetail{}, err
+    }
+    appointmentDetail := model.AppointmentDetail{
+        Appointment:          appointment,
+        AppointmentServices:  services,
+        AppointmentDiscounts: discounts,
+        Client:               client,
+        CompleteAppointments: a.CompleteAppointments,
+    }
+
+    return appointmentDetail, nil
 }

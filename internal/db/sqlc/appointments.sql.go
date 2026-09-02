@@ -90,6 +90,77 @@ func (q *Queries) GetAppointmentCountForPeriod(ctx context.Context, arg GetAppoi
 	return count, err
 }
 
+const getAppointmentWithClient = `-- name: GetAppointmentWithClient :one
+SELECT
+    appointments.id,
+    appointments.client_id,
+    appointments.appt_date,
+    appointments.appt_status,
+    appointments.late_fee,
+    appointments.payment_method,
+    appointments.notes,
+    appointments.receipt_url,
+    appointments.loyalty_reward,
+    appointments.tip,
+    appointments.created_at,
+
+    clients.client_name,
+    clients.contact_method,
+
+    (
+        SELECT COUNT(*)
+        FROM appointments AS client_appointments
+        WHERE client_appointments.client_id = appointments.client_id
+          AND client_appointments.appt_status = 'complete'
+    ) AS complete_appointments
+
+FROM appointments
+
+JOIN clients
+    ON clients.id = appointments.client_id
+
+WHERE appointments.id = $1
+`
+
+type GetAppointmentWithClientRow struct {
+	ID                   pgtype.UUID        `json:"id"`
+	ClientID             pgtype.UUID        `json:"client_id"`
+	ApptDate             pgtype.Timestamptz `json:"appt_date"`
+	ApptStatus           AppointmentStatus  `json:"appt_status"`
+	LateFee              pgtype.Numeric     `json:"late_fee"`
+	PaymentMethod        NullPaymentMethod  `json:"payment_method"`
+	Notes                pgtype.Text        `json:"notes"`
+	ReceiptUrl           pgtype.Text        `json:"receipt_url"`
+	LoyaltyReward        bool               `json:"loyalty_reward"`
+	Tip                  pgtype.Numeric     `json:"tip"`
+	CreatedAt            pgtype.Timestamptz `json:"created_at"`
+	ClientName           string             `json:"client_name"`
+	ContactMethod        pgtype.Text        `json:"contact_method"`
+	CompleteAppointments int64              `json:"complete_appointments"`
+}
+
+func (q *Queries) GetAppointmentWithClient(ctx context.Context, id pgtype.UUID) (GetAppointmentWithClientRow, error) {
+	row := q.db.QueryRow(ctx, getAppointmentWithClient, id)
+	var i GetAppointmentWithClientRow
+	err := row.Scan(
+		&i.ID,
+		&i.ClientID,
+		&i.ApptDate,
+		&i.ApptStatus,
+		&i.LateFee,
+		&i.PaymentMethod,
+		&i.Notes,
+		&i.ReceiptUrl,
+		&i.LoyaltyReward,
+		&i.Tip,
+		&i.CreatedAt,
+		&i.ClientName,
+		&i.ContactMethod,
+		&i.CompleteAppointments,
+	)
+	return i, err
+}
+
 const listAppointments = `-- name: ListAppointments :many
 SELECT id, client_id, appt_date, appt_status, late_fee, payment_method, notes, receipt_url, loyalty_reward, tip, created_at FROM appointments
 `
@@ -159,6 +230,50 @@ func (q *Queries) ListAppointmentsByDateRange(ctx context.Context, arg ListAppoi
 			&i.LoyaltyReward,
 			&i.Tip,
 			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listAppointmentsWithClient = `-- name: ListAppointmentsWithClient :many
+SELECT
+  appointments.id,
+  appointments.appt_date,
+  appointments.appt_status,
+  clients.client_name
+FROM appointments
+JOIN clients
+  ON appointments.client_id = clients.id
+ORDER BY appointments.appt_date DESC
+`
+
+type ListAppointmentsWithClientRow struct {
+	ID         pgtype.UUID        `json:"id"`
+	ApptDate   pgtype.Timestamptz `json:"appt_date"`
+	ApptStatus AppointmentStatus  `json:"appt_status"`
+	ClientName string             `json:"client_name"`
+}
+
+func (q *Queries) ListAppointmentsWithClient(ctx context.Context) ([]ListAppointmentsWithClientRow, error) {
+	rows, err := q.db.Query(ctx, listAppointmentsWithClient)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListAppointmentsWithClientRow{}
+	for rows.Next() {
+		var i ListAppointmentsWithClientRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ApptDate,
+			&i.ApptStatus,
+			&i.ClientName,
 		); err != nil {
 			return nil, err
 		}

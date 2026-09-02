@@ -54,3 +54,45 @@ WHERE appointments.appt_date > now()
   AND clients.deleted_at IS NULL
 ORDER BY appointments.appt_date ASC
 LIMIT 5;
+
+-- name: ListAppointmentsWithClient :many
+SELECT
+  appointments.id,
+  appointments.appt_date,
+  appointments.appt_status,
+  clients.client_name
+FROM appointments
+JOIN clients
+  ON appointments.client_id = clients.id
+ORDER BY appointments.appt_date DESC;
+
+-- name: GetAppointmentWithClient :one
+SELECT
+    appointments.id,
+    appointments.client_id,
+    appointments.appt_date,
+    appointments.appt_status,
+    appointments.late_fee,
+    appointments.payment_method,
+    appointments.notes,
+    appointments.receipt_url,
+    appointments.loyalty_reward,
+    appointments.tip,
+    appointments.created_at,
+
+    clients.client_name,
+    clients.contact_method,
+
+    (
+        SELECT COUNT(*)
+        FROM appointments AS client_appointments
+        WHERE client_appointments.client_id = appointments.client_id
+          AND client_appointments.appt_status = 'complete'
+    ) AS complete_appointments
+
+FROM appointments
+
+JOIN clients
+    ON clients.id = appointments.client_id
+
+WHERE appointments.id = $1;

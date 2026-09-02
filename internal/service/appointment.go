@@ -41,7 +41,7 @@ func (s *AppointmentService) CreateAppointment(ctx context.Context, clientID str
 func (s *AppointmentService) GetAppointment(ctx context.Context, id string) (model.Appointment, error) {
 	return s.appointmentRepo.GetAppointment(ctx, id)
 }
-func (s *AppointmentService) ListAppointments(ctx context.Context) ([]model.Appointment, error) {
+func (s *AppointmentService) ListAppointments(ctx context.Context) ([]model.AppointmentWithClient, error) {
 	return s.appointmentRepo.ListAppointments(ctx)
 }
 func (s *AppointmentService) ListAppointmentsByDateRange(ctx context.Context, dateOne time.Time, dateTwo time.Time) ([]model.Appointment, error) {
