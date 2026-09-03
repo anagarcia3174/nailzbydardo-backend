@@ -45,7 +45,7 @@ type AppointmentDetail struct {
 	AppointmentServices  []AppointmentServiceSummary  `json:"appointment_services"`
 	AppointmentDiscounts []AppointmentDiscountSummary `json:"appointment_discounts"`
 	Client               ClientSummary                `json:"client_summary"`
-	CompleteAppointments int64                       `json:"complete_appointments"`
+	AppointmentRank      int32                        `json:"appointment_rank"`
 }
 
 type AppointmentSummary struct {
@@ -75,8 +75,8 @@ type AppointmentForDashboard struct {
 }
 
 type CalendarAppointment struct {
-	ID            string                 `json:"id"`
-	ApptDate      time.Time              `json:"appt_date"`
-	Notes         *string                `json:"notes"`
+	ID         string    `json:"id"`
+	ApptDate   time.Time `json:"appt_date"`
+	Notes      *string   `json:"notes"`
 	ClientName string    `json:"client_name"`
 }

@@ -554,7 +554,7 @@ func (r *AppointmentRepository) GetAppointmentDetail(ctx context.Context, id str
 		AppointmentServices:  services,
 		AppointmentDiscounts: discounts,
 		Client:               client,
-		CompleteAppointments: a.CompleteAppointments,
+		AppointmentRank:      a.AppointmentRank,
 	}
 
 	return appointmentDetail, nil

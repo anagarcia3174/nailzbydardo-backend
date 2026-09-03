@@ -84,6 +84,7 @@ All routes except `/health` and `/auth/login` require a valid session cookie.
 | PATCH | `/clients/{id}` | Update a client |
 | DELETE | `/clients/{id}` | Soft-delete a client |
 | GET | `/clients/{id}/appointments` | List a client's appointment history |
+| GET | `/clients/{id}/spent` | Get a client's total spent
 
 ### Services
 | Method | Route | Description |

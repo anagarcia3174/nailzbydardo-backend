@@ -87,13 +87,20 @@ SELECT
         SELECT COUNT(*)
         FROM appointments AS client_appointments
         WHERE client_appointments.client_id = appointments.client_id
-          AND client_appointments.appt_status = 'complete'
-    ) AS complete_appointments
+        AND client_appointments.appt_status = 'complete'
+        AND (
+            client_appointments.appt_date < appointments.appt_date
+            OR (
+                client_appointments.appt_date = appointments.appt_date
+                AND client_appointments.created_at < appointments.created_at
+            )
+        )
+    ) + 1 AS appointment_rank
 
 FROM appointments
 
 JOIN clients
-    ON clients.id = appointments.client_id
+ON clients.id = appointments.client_id
 
 WHERE appointments.id = $1;
 

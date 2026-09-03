@@ -111,32 +111,39 @@ SELECT
         SELECT COUNT(*)
         FROM appointments AS client_appointments
         WHERE client_appointments.client_id = appointments.client_id
-          AND client_appointments.appt_status = 'complete'
-    ) AS complete_appointments
+        AND client_appointments.appt_status = 'complete'
+        AND (
+            client_appointments.appt_date < appointments.appt_date
+            OR (
+                client_appointments.appt_date = appointments.appt_date
+                AND client_appointments.created_at < appointments.created_at
+            )
+        )
+    ) + 1 AS appointment_rank
 
 FROM appointments
 
 JOIN clients
-    ON clients.id = appointments.client_id
+ON clients.id = appointments.client_id
 
 WHERE appointments.id = $1
 `
 
 type GetAppointmentWithClientRow struct {
-	ID                   pgtype.UUID        `json:"id"`
-	ClientID             pgtype.UUID        `json:"client_id"`
-	ApptDate             pgtype.Timestamptz `json:"appt_date"`
-	ApptStatus           AppointmentStatus  `json:"appt_status"`
-	LateFee              pgtype.Numeric     `json:"late_fee"`
-	PaymentMethod        NullPaymentMethod  `json:"payment_method"`
-	Notes                pgtype.Text        `json:"notes"`
-	ReceiptUrl           pgtype.Text        `json:"receipt_url"`
-	LoyaltyReward        bool               `json:"loyalty_reward"`
-	Tip                  pgtype.Numeric     `json:"tip"`
-	CreatedAt            pgtype.Timestamptz `json:"created_at"`
-	ClientName           string             `json:"client_name"`
-	ContactMethod        pgtype.Text        `json:"contact_method"`
-	CompleteAppointments int64              `json:"complete_appointments"`
+	ID              pgtype.UUID        `json:"id"`
+	ClientID        pgtype.UUID        `json:"client_id"`
+	ApptDate        pgtype.Timestamptz `json:"appt_date"`
+	ApptStatus      AppointmentStatus  `json:"appt_status"`
+	LateFee         pgtype.Numeric     `json:"late_fee"`
+	PaymentMethod   NullPaymentMethod  `json:"payment_method"`
+	Notes           pgtype.Text        `json:"notes"`
+	ReceiptUrl      pgtype.Text        `json:"receipt_url"`
+	LoyaltyReward   bool               `json:"loyalty_reward"`
+	Tip             pgtype.Numeric     `json:"tip"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	ClientName      string             `json:"client_name"`
+	ContactMethod   pgtype.Text        `json:"contact_method"`
+	AppointmentRank int32              `json:"appointment_rank"`
 }
 
 func (q *Queries) GetAppointmentWithClient(ctx context.Context, id pgtype.UUID) (GetAppointmentWithClientRow, error) {
@@ -156,7 +163,7 @@ func (q *Queries) GetAppointmentWithClient(ctx context.Context, id pgtype.UUID) 
 		&i.CreatedAt,
 		&i.ClientName,
 		&i.ContactMethod,
-		&i.CompleteAppointments,
+		&i.AppointmentRank,
 	)
 	return i, err
 }
