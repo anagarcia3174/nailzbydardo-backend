@@ -2,7 +2,7 @@
 
 A production-style REST API for managing a nail salon business — clients, appointments, services, expenses, and financial reporting. Built from scratch in Go with a strict layered architecture, type-safe SQL, and session-based authentication.
 
-Built as the backend for a small business management app used by a real nail tech.
+Built as the backend for a small business management app used by a real nail tech. The operator UI is a separate React PWA: [nailzbydardo-frontend](https://github.com/anagarcia3174/nailzbydardo-frontend). This API owns business rules, money math (integer cents), and persistence; the frontend is a cookie-authenticated client that points at this server via `VITE_API_URL`.
 
 ## Tech Stack
 
@@ -153,6 +153,8 @@ go run ./cmd/server
 ```
 
 The server starts on the port specified in `.env` (default `8080`). Check `/health` to confirm the database connection.
+
+To run the UI against this API, clone [nailzbydardo-frontend](https://github.com/anagarcia3174/nailzbydardo-frontend) and set `VITE_API_URL` to this origin (include credentials / CORS must allow that frontend origin).
 
 ## License
 
