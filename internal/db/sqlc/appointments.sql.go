@@ -241,6 +241,62 @@ func (q *Queries) ListAppointmentsByDateRange(ctx context.Context, arg ListAppoi
 	return items, nil
 }
 
+const listAppointmentsForCalendar = `-- name: ListAppointmentsForCalendar :many
+SELECT
+    appointments.id,
+    appointments.appt_date,
+    appointments.appt_status,
+    appointments.notes,
+    clients.client_name
+FROM appointments
+JOIN clients
+    ON appointments.client_id = clients.id
+WHERE appointments.appt_date >= $1
+    AND appointments.appt_date < $2
+    AND appointments.appt_status != 'cancelled'
+    AND clients.deleted_at IS NULL
+ORDER BY appointments.appt_date ASC
+`
+
+type ListAppointmentsForCalendarParams struct {
+	ApptDate   pgtype.Timestamptz `json:"appt_date"`
+	ApptDate_2 pgtype.Timestamptz `json:"appt_date_2"`
+}
+
+type ListAppointmentsForCalendarRow struct {
+	ID         pgtype.UUID        `json:"id"`
+	ApptDate   pgtype.Timestamptz `json:"appt_date"`
+	ApptStatus AppointmentStatus  `json:"appt_status"`
+	Notes      pgtype.Text        `json:"notes"`
+	ClientName string             `json:"client_name"`
+}
+
+func (q *Queries) ListAppointmentsForCalendar(ctx context.Context, arg ListAppointmentsForCalendarParams) ([]ListAppointmentsForCalendarRow, error) {
+	rows, err := q.db.Query(ctx, listAppointmentsForCalendar, arg.ApptDate, arg.ApptDate_2)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListAppointmentsForCalendarRow{}
+	for rows.Next() {
+		var i ListAppointmentsForCalendarRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ApptDate,
+			&i.ApptStatus,
+			&i.Notes,
+			&i.ClientName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listAppointmentsWithClient = `-- name: ListAppointmentsWithClient :many
 SELECT
   appointments.id,

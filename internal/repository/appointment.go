@@ -106,9 +106,9 @@ func (r *AppointmentRepository) ListAppointments(ctx context.Context) ([]model.A
 			return []model.AppointmentWithClient{}, fmt.Errorf("error converting uuid to id: %w", err)
 		}
 		appointment := model.AppointmentWithClient{
-			ID:            appointmentID,
-			ApptDate:      pgTimestamptzToTime(a.ApptDate),
-			ApptStatus:    a.ApptStatus,
+			ID:         appointmentID,
+			ApptDate:   pgTimestamptzToTime(a.ApptDate),
+			ApptStatus: a.ApptStatus,
 			ClientName: a.ClientName,
 		}
 		appointments = append(appointments, appointment)
@@ -205,6 +205,35 @@ func (r *AppointmentRepository) ListUpcomingAppointments(ctx context.Context) ([
 			LoyaltyReward: a.LoyaltyReward,
 			Tip:           pgNumericToCentsPtr(a.Tip),
 			CreatedAt:     pgTimestamptzToTime(a.CreatedAt),
+		}
+		appointments = append(appointments, appointment)
+	}
+	return appointments, nil
+}
+
+func (r *AppointmentRepository) ListAppointmentsForCalendar(ctx context.Context) ([]model.CalendarAppointment, error) {
+	year := time.Now().UTC().Year()
+	start := time.Date(year, time.January, 1, 0, 0, 0, 0, time.UTC)
+	end := time.Date(year+1, time.January, 1, 0, 0, 0, 0, time.UTC)
+	params := sqlc.ListAppointmentsForCalendarParams{
+		ApptDate:   timeToPgTimestamptz(start),
+		ApptDate_2: timeToPgTimestamptz(end),
+	}
+	appointmentRows, err := r.q.ListAppointmentsForCalendar(ctx, params)
+	if err != nil {
+		return []model.CalendarAppointment{}, fmt.Errorf("error getting upcoming appointments: %w", err)
+	}
+	appointments := []model.CalendarAppointment{}
+	for _, a := range appointmentRows {
+		appointmentID, err := pgUUIDToString(a.ID)
+		if err != nil {
+			return []model.CalendarAppointment{}, fmt.Errorf("error converting uuid to id: %w", err)
+		}
+		appointment := model.CalendarAppointment{
+			ID:         appointmentID,
+			ApptDate:   pgTimestamptzToTime(a.ApptDate),
+			Notes:      pgTextToStringPtr(a.Notes),
+			ClientName: a.ClientName,
 		}
 		appointments = append(appointments, appointment)
 	}
@@ -467,66 +496,66 @@ func (r *AppointmentRepository) DeleteAppointmentDiscount(ctx context.Context, i
 }
 
 func (r *AppointmentRepository) GetAppointmentDetail(ctx context.Context, id string) (model.AppointmentDetail, error) {
-    pgID, err := stringToPgUUID(id)
-    if err != nil {
-        return model.AppointmentDetail{}, ErrInvalidID
-    }
+	pgID, err := stringToPgUUID(id)
+	if err != nil {
+		return model.AppointmentDetail{}, ErrInvalidID
+	}
 
-    a, err := r.q.GetAppointmentWithClient(ctx, pgID)
-    if err != nil {
-        if errors.Is(err, pgx.ErrNoRows) {
-            return model.AppointmentDetail{}, ErrNotFound
-        }
+	a, err := r.q.GetAppointmentWithClient(ctx, pgID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return model.AppointmentDetail{}, ErrNotFound
+		}
 
-        return model.AppointmentDetail{}, fmt.Errorf("error getting appointment detail: %w", err)
-    }
+		return model.AppointmentDetail{}, fmt.Errorf("error getting appointment detail: %w", err)
+	}
 
-    appointmentID, err := pgUUIDToString(a.ID)
-    if err != nil {
-        return model.AppointmentDetail{}, fmt.Errorf("error converting uuid to id: %w", err)
-    }
+	appointmentID, err := pgUUIDToString(a.ID)
+	if err != nil {
+		return model.AppointmentDetail{}, fmt.Errorf("error converting uuid to id: %w", err)
+	}
 
-    clientID, err := pgUUIDToString(a.ClientID)
-    if err != nil {
-        return model.AppointmentDetail{}, fmt.Errorf("error converting uuid to id: %w", err)
-    }
+	clientID, err := pgUUIDToString(a.ClientID)
+	if err != nil {
+		return model.AppointmentDetail{}, fmt.Errorf("error converting uuid to id: %w", err)
+	}
 
-    appointment := model.Appointment{
-        ID:            appointmentID,
-        ClientID:      clientID,
-        ApptDate:      pgTimestamptzToTime(a.ApptDate),
-        ApptStatus:    a.ApptStatus,
-        LateFee:       pgNumericToCentsPtr(a.LateFee),
-        PaymentMethod: nullPaymentMethodToPtr(a.PaymentMethod),
-        Notes:         pgTextToStringPtr(a.Notes),
-        ReceiptURL:    pgTextToStringPtr(a.ReceiptUrl),
-        LoyaltyReward: a.LoyaltyReward,
-        Tip:           pgNumericToCentsPtr(a.Tip),
-        CreatedAt:     pgTimestamptzToTime(a.CreatedAt),
-    }
+	appointment := model.Appointment{
+		ID:            appointmentID,
+		ClientID:      clientID,
+		ApptDate:      pgTimestamptzToTime(a.ApptDate),
+		ApptStatus:    a.ApptStatus,
+		LateFee:       pgNumericToCentsPtr(a.LateFee),
+		PaymentMethod: nullPaymentMethodToPtr(a.PaymentMethod),
+		Notes:         pgTextToStringPtr(a.Notes),
+		ReceiptURL:    pgTextToStringPtr(a.ReceiptUrl),
+		LoyaltyReward: a.LoyaltyReward,
+		Tip:           pgNumericToCentsPtr(a.Tip),
+		CreatedAt:     pgTimestamptzToTime(a.CreatedAt),
+	}
 
-    client := model.ClientSummary{
-        ID:            clientID,
-        ClientName:    a.ClientName,
-        ContactMethod: pgTextToStringPtr(a.ContactMethod),
-    }
+	client := model.ClientSummary{
+		ID:            clientID,
+		ClientName:    a.ClientName,
+		ContactMethod: pgTextToStringPtr(a.ContactMethod),
+	}
 
-    services, err := r.ListAppointmentServicesByAppointment(ctx, id)
-    if err != nil {
-        return model.AppointmentDetail{}, err
-    }
+	services, err := r.ListAppointmentServicesByAppointment(ctx, id)
+	if err != nil {
+		return model.AppointmentDetail{}, err
+	}
 
-    discounts, err := r.ListAppointmentDiscountsByAppointment(ctx, id)
-    if err != nil {
-        return model.AppointmentDetail{}, err
-    }
-    appointmentDetail := model.AppointmentDetail{
-        Appointment:          appointment,
-        AppointmentServices:  services,
-        AppointmentDiscounts: discounts,
-        Client:               client,
-        CompleteAppointments: a.CompleteAppointments,
-    }
+	discounts, err := r.ListAppointmentDiscountsByAppointment(ctx, id)
+	if err != nil {
+		return model.AppointmentDetail{}, err
+	}
+	appointmentDetail := model.AppointmentDetail{
+		Appointment:          appointment,
+		AppointmentServices:  services,
+		AppointmentDiscounts: discounts,
+		Client:               client,
+		CompleteAppointments: a.CompleteAppointments,
+	}
 
-    return appointmentDetail, nil
+	return appointmentDetail, nil
 }

@@ -14,6 +14,8 @@ type Config struct {
 	SessionCookieName string
 	AppEnv            string
 	FrontendURL       string
+	CalendarSecret    string
+	BaseURL           string
 }
 
 func Load(path string) (*Config, error) {
@@ -42,12 +44,22 @@ func Load(path string) (*Config, error) {
 	if FrontendURL == "" {
 		return nil, errors.New("Missing frontend url")
 	}
+	CalendarSecret := os.Getenv("CALENDAR_SECRET")
+	if CalendarSecret == "" {
+		return nil, errors.New("Missing calendar secret")
+	}
+	BaseURL := os.Getenv("BASE_URL")
+	if BaseURL == "" {
+		return nil, errors.New("Missing base url")
+	}
 	config := Config{
 		DatabaseURL:       DatabaseURL,
 		Port:              PORT,
 		SessionCookieName: SessionCookieName,
 		AppEnv:            AppEnv,
-		FrontendURL: FrontendURL,
+		FrontendURL:       FrontendURL,
+		CalendarSecret:    CalendarSecret,
+		BaseURL:           BaseURL,
 	}
 	return &config, nil
 }

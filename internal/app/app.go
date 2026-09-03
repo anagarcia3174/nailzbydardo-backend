@@ -35,6 +35,7 @@ func BuildHandlers(pool *pgxpool.Pool, cfg *config.Config) *chi.Mux {
 	authMiddleware := middleware.RequireAuth(authService, cfg.SessionCookieName)
 	dashboardService := service.NewDashboardService(appointmentService, expenseService)
 	dashboardHandler := handler.NewDashboardHandler(dashboardService)
-	handlers := router.Handlers{Client: clientHandler, Health: healthHandler, Catalog: catalogHandler, Expense: expenseHandler, Appointment: appointmentHandler, Auth: authHandler, Dashboard: dashboardHandler}
+	calendarHandler := handler.NewCalendarHandler(appointmentService, cfg.CalendarSecret, cfg.BaseURL)
+	handlers := router.Handlers{Client: clientHandler, Health: healthHandler, Catalog: catalogHandler, Expense: expenseHandler, Appointment: appointmentHandler, Auth: authHandler, Dashboard: dashboardHandler, Calendar: calendarHandler}
 	return router.New(handlers, authMiddleware, cfg.FrontendURL)
 }

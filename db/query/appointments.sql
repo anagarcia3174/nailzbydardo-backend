@@ -96,3 +96,20 @@ JOIN clients
     ON clients.id = appointments.client_id
 
 WHERE appointments.id = $1;
+
+
+-- name: ListAppointmentsForCalendar :many
+SELECT
+    appointments.id,
+    appointments.appt_date,
+    appointments.appt_status,
+    appointments.notes,
+    clients.client_name
+FROM appointments
+JOIN clients
+    ON appointments.client_id = clients.id
+WHERE appointments.appt_date >= $1
+    AND appointments.appt_date < $2
+    AND appointments.appt_status != 'cancelled'
+    AND clients.deleted_at IS NULL
+ORDER BY appointments.appt_date ASC;

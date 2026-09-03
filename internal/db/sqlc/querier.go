@@ -37,6 +37,7 @@ type Querier interface {
 	ListAppointmentServicesByAppointment(ctx context.Context, appointmentID pgtype.UUID) ([]ListAppointmentServicesByAppointmentRow, error)
 	ListAppointments(ctx context.Context) ([]Appointment, error)
 	ListAppointmentsByDateRange(ctx context.Context, arg ListAppointmentsByDateRangeParams) ([]Appointment, error)
+	ListAppointmentsForCalendar(ctx context.Context, arg ListAppointmentsForCalendarParams) ([]ListAppointmentsForCalendarRow, error)
 	ListAppointmentsWithClient(ctx context.Context) ([]ListAppointmentsWithClientRow, error)
 	ListClientAppointments(ctx context.Context, clientID pgtype.UUID) ([]ListClientAppointmentsRow, error)
 	ListClients(ctx context.Context) ([]ListClientsRow, error)

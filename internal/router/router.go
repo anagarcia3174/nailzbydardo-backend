@@ -17,13 +17,14 @@ type Handlers struct {
 	Appointment *handler.AppointmentHandler
 	Auth        *handler.AuthHandler
 	Dashboard   *handler.DashboardHandler
+	Calendar    *handler.CalendarHandler
 }
 
 func New(h Handlers, authMiddleware func(http.Handler) http.Handler, frontendURL string) *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{frontendURL}, // set once you know it
+		AllowedOrigins: []string{frontendURL}, // set once you know it
 		AllowedMethods:   []string{"GET", "POST", "PATCH", "DELETE"},
 		AllowedHeaders:   []string{"Content-Type"},
 		AllowCredentials: true, // REQUIRED since you use cookies, not bearer tokens
@@ -34,6 +35,7 @@ func New(h Handlers, authMiddleware func(http.Handler) http.Handler, frontendURL
 
 	r.Get("/health", h.Health.ServeHTTP)
 	r.Post("/auth/login", h.Auth.Login)
+	r.Get("/calendar.ics", h.Calendar.GetCalendarFeed)
 
 	r.Group(func(r chi.Router) {
 		r.Use(authMiddleware)

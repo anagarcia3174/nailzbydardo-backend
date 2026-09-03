@@ -73,3 +73,10 @@ type AppointmentForDashboard struct {
 	ApptDate   time.Time `json:"appt_date"`
 	ClientName string    `json:"client_name"`
 }
+
+type CalendarAppointment struct {
+	ID            string                 `json:"id"`
+	ApptDate      time.Time              `json:"appt_date"`
+	Notes         *string                `json:"notes"`
+	ClientName string    `json:"client_name"`
+}
