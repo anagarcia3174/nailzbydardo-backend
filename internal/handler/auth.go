@@ -39,7 +39,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
     Value:    session.ID,
     Expires:  session.ExpiresAt,
     HttpOnly: true,
-    SameSite: http.SameSiteNoneMode,
+    SameSite: http.SameSiteLaxMode,
     Path:     "/",
     Secure:   h.secureCookies,
 }
