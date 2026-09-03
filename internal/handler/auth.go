@@ -35,14 +35,14 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	cookie := http.Cookie{
-		Name:     h.cookieName,
-		Value:    session.ID,
-		Expires:  session.ExpiresAt,
-		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
-		Path:     "/",
-		Secure:   h.secureCookies,
-	}
+    Name:     h.cookieName,
+    Value:    session.ID,
+    Expires:  session.ExpiresAt,
+    HttpOnly: true,
+    SameSite: http.SameSiteNoneMode,
+    Path:     "/",
+    Secure:   h.secureCookies,
+}
 	http.SetCookie(w, &cookie)
 	w.WriteHeader(http.StatusNoContent)
 }
